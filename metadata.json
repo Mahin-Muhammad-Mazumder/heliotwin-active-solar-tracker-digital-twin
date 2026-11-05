@@ -1,0 +1,6 @@
+{
+  "name": "HelioTwin — Active Solar Tracker Digital Twin & Telemetry",
+  "description": "Interactive 3D WebGL Digital Twin and real-time efficiency telemetry dashboard for a Microcontroller-Based Active Solar Tracking System.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
