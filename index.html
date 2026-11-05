@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Microcontroller-Based Active Solar Tracking System</title>
+  <meta name="description" content="Interactive 3D WebGL Digital Twin and real-time efficiency telemetry dashboard for a Microcontroller-Based Active Solar Tracking System." />
+  <!-- ES Module Shims: broadens importmap support to Firefox ESR, older Safari, etc. -->
+  <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.1/dist/es-module-shims.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-obsidian: #090D16;
+      --surface-slate: #111827;
+      --accent-cyan: #00F0FF;
+      --accent-amber: #F59E0B;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #090D16;
+      color: #F1F5F9;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    input[type="range"] {
+      accent-color: #00F0FF;
+    }
+    @media (max-width: 1024px) {
+      #middle-panels {
+        overflow-y: auto;
+        max-height: calc(100vh - 180px);
+      }
+    }
+  </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden bg-[#090D16] text-slate-100 select-none">
+  <!-- 0. Dark Solar System Activation / Boot Loading Screen -->
+  <div id="boot-overlay" class="fixed inset-0 z-50 bg-[#060911]/95 backdrop-blur-xl flex flex-col items-center justify-center px-6 transition-opacity duration-500 opacity-100">
+    <div class="w-full max-w-md rounded-2xl border border-slate-800/90 bg-[#0B111E]/95 p-6 shadow-[0_0_60px_rgba(0,240,255,0.12)] flex flex-col items-center text-center gap-4">
+      <div class="relative w-20 h-20 flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full border-2 border-dashed border-[#00F0FF]/50 animate-spin"></div>
+        <div class="absolute inset-2 rounded-full border border-[#F59E0B]/40 animate-pulse"></div>
+        <div class="w-11 h-11 rounded-full bg-gradient-to-br from-[#F59E0B]/25 to-[#00F0FF]/25 border border-[#00F0FF]/60 flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.35)]">
+          <span class="text-xl text-[#F59E0B] animate-spin">☀</span>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <div class="text-[10px] font-mono tracking-[0.2em] text-[#00F0FF] uppercase font-semibold">
+          SYSTEM ACTIVATING · DIGITAL TWIN BOOT
+        </div>
+        <h2 class="text-base font-bold text-slate-100 tracking-tight">
+          Microcontroller-Based Active Solar Tracking System
+        </h2>
+      </div>
+
+      <div class="w-full bg-[#070b14] border border-slate-800/80 rounded-xl p-3 text-left font-mono text-[11px] space-y-1.5">
+        <div id="boot-step-0" class="flex items-center justify-between gap-2 text-[#00F0FF]">
+          <span class="truncate">&gt; INITIALIZING HELIOTWIN 3D WEBGL DIGITAL TWIN...</span>
+          <span id="boot-status-0" class="shrink-0 font-bold">...</span>
+        </div>
+        <div id="boot-step-1" class="flex items-center justify-between gap-2 text-slate-600">
+          <span class="truncate">&gt; CALIBRATING 4-QUADRANT LDR ARRAY (A0–A3 · 10kΩ BRIDGE)...</span>
+          <span id="boot-status-1" class="shrink-0 font-bold">WAIT</span>
+        </div>
+        <div id="boot-step-2" class="flex items-center justify-between gap-2 text-slate-600">
+          <span class="truncate">&gt; HOMING DUAL-AXIS SG90 SERVOS (D2 YAW / D13 PITCH · 0°–180°)...</span>
+          <span id="boot-status-2" class="shrink-0 font-bold">WAIT</span>
+        </div>
+        <div id="boot-step-3" class="flex items-center justify-between gap-2 text-slate-600">
+          <span class="truncate">&gt; LOCKING SOLAR EPHEMERIS &amp; TELEMETRY STREAM...</span>
+          <span id="boot-status-3" class="shrink-0 font-bold">WAIT</span>
+        </div>
+      </div>
+
+      <div class="w-full space-y-1.5">
+        <div class="flex items-center justify-between text-[11px] font-mono">
+          <span class="text-slate-400">TELEMETRY HANDSHAKE</span>
+          <span id="boot-pct-text" class="text-[#00F0FF] font-bold tabular-nums">0%</span>
+        </div>
+        <div class="w-full h-2 rounded-full bg-slate-900 border border-slate-800 overflow-hidden">
+          <div id="boot-progress-bar" class="h-full bg-gradient-to-r from-[#00F0FF] via-cyan-300 to-[#F59E0B] transition-all duration-75" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Full-Screen 3D WebGL Viewport Container -->
+  <div id="webgl-container" class="absolute inset-0 w-full h-full z-0 cursor-grab active:cursor-grabbing" aria-label="Interactive 3D Solar Tracker Digital Twin Viewport"></div>
+
+  <!-- 2. 3D X-Ray Component Callout Pins -->
+  <div id="xray-overlay" class="absolute inset-0 pointer-events-none z-10 overflow-hidden block">
+    <div id="lbl-0" style="display: none; will-change: transform;" class="absolute top-0 left-0 -translate-x-1/2 -translate-y-full pb-3">
+      <div class="px-2.5 py-1 rounded-md bg-[#111827]/95 border border-[#00F0FF]/45 text-slate-100 text-[11px] leading-tight shadow-lg whitespace-nowrap">
+        <div class="font-semibold tracking-tight">Arduino UNO + 4× 10kΩ Breadboard (A0–A3)</div>
+        <div id="lbl-metric-0" class="font-mono text-[10px] tabular-nums text-[#00F0FF]">Pins A0–A3 · 5V/GND · D2/D13</div>
+      </div>
+    </div>
+    <div id="lbl-1" style="display: none; will-change: transform;" class="absolute top-0 left-0 -translate-x-1/2 -translate-y-full pb-3">
+      <div class="px-2.5 py-1 rounded-md bg-[#111827]/95 border border-[#00F0FF]/45 text-slate-100 text-[11px] leading-tight shadow-lg whitespace-nowrap">
+        <div class="font-semibold tracking-tight">4-Quadrant Cross-Baffle LDR Array</div>
+        <div id="lbl-metric-1" class="font-mono text-[10px] tabular-nums text-[#00F0FF]">A0(TL) A1(TR) A2(BL) A3(BR)</div>
+      </div>
+    </div>
+    <div id="lbl-2" style="display: none; will-change: transform;" class="absolute top-0 left-0 -translate-x-1/2 -translate-y-full pb-3">
+      <div class="px-2.5 py-1 rounded-md bg-[#111827]/95 border border-[#00F0FF]/45 text-slate-100 text-[11px] leading-tight shadow-lg whitespace-nowrap">
+        <div class="font-semibold tracking-tight">Base Yaw SG90 Servo (Pin D2 · 0°–180°)</div>
+        <div id="lbl-metric-2" class="font-mono text-[10px] tabular-nums text-[#00F0FF]">D2 PWM: 112° (Clamped 0°–180°)</div>
+      </div>
+    </div>
+    <div id="lbl-3" style="display: none; will-change: transform;" class="absolute top-0 left-0 -translate-x-1/2 -translate-y-full pb-3">
+      <div class="px-2.5 py-1 rounded-md bg-[#111827]/95 border border-[#00F0FF]/45 text-slate-100 text-[11px] leading-tight shadow-lg whitespace-nowrap">
+        <div class="font-semibold tracking-tight">U-Bracket Pitch SG90 Servo (Pin D13 · 0°–180°)</div>
+        <div id="lbl-metric-3" class="font-mono text-[10px] tabular-nums text-[#00F0FF]">D13 PWM: 68° (Tilt -21.9°)</div>
+      </div>
+    </div>
+    <div id="lbl-4" style="display: none; will-change: transform;" class="absolute top-0 left-0 -translate-x-1/2 -translate-y-full pb-3">
+      <div class="px-2.5 py-1 rounded-md bg-[#111827]/95 border border-[#F59E0B]/45 text-slate-100 text-[11px] leading-tight shadow-lg whitespace-nowrap">
+        <div class="font-semibold tracking-tight">Rig B · Fixed Baseline (0°)</div>
+        <div id="lbl-metric-4" class="font-mono text-[10px] tabular-nums text-[#F59E0B]">Static 0° Horizontal Tilt</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Outer HUD Layout Wrapper -->
+  <div class="relative z-20 w-full h-full pointer-events-none flex flex-col justify-between">
+    <!-- TOP BAR CONTRACT -->
+    <header class="pointer-events-auto flex items-center justify-between gap-8 px-5 py-3 bg-[#111827]/95 border-b border-slate-800/80">
+      <a href="#top" id="brand-reset" class="text-base md:text-lg font-bold tracking-tight text-slate-100 whitespace-nowrap shrink-0">
+        Microcontroller-Based Active Solar Tracking System
+      </a>
+
+      <nav class="hidden xl:flex items-center gap-6 text-xs font-medium text-slate-300">
+        <button type="button" data-cam="overview" class="nav-cam-btn text-[#00F0FF] underline underline-offset-4 hover:text-[#00F0FF] transition-colors whitespace-nowrap shrink-0 cursor-pointer">
+          Dual-Rig Overview
+        </button>
+        <button type="button" data-cam="arduino" class="nav-cam-btn hover:text-[#00F0FF] transition-colors whitespace-nowrap shrink-0 cursor-pointer">
+          Arduino UNO + Breadboard
+        </button>
+        <button type="button" data-cam="ldrs" class="nav-cam-btn hover:text-[#00F0FF] transition-colors whitespace-nowrap shrink-0 cursor-pointer">
+          4-Quadrant LDR Baffle
+        </button>
+        <button type="button" data-cam="servo" class="nav-cam-btn hover:text-[#00F0FF] transition-colors whitespace-nowrap shrink-0 cursor-pointer">
+          SG90 U-Bracket Gimbal
+        </button>
+      </nav>
+
+      <div class="flex items-center gap-3 shrink-0">
+        <button type="button" id="toggle-xray-btn" class="px-3.5 py-1.5 text-xs font-medium rounded-lg border transition-colors whitespace-nowrap shrink-0 cursor-pointer flex items-center gap-1.5 bg-[#00F0FF]/15 border-[#00F0FF]/60 text-[#00F0FF]">
+          <span>👁</span>
+          <span id="toggle-xray-text">3D Labels: Active</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- MIDDLE ROW: Right Power Telemetry Box -->
+    <div id="middle-panels" class="flex-1 flex flex-col lg:flex-row items-start justify-end px-4 py-3 gap-4 overflow-y-auto lg:overflow-visible">
+      <!-- RIGHT HUD BOX: POWER TELEMETRY (Reference Image Arrangement + Click-to-Minimize) -->
+      <aside class="pointer-events-auto w-full lg:w-[376px] bg-[#0B111E]/95 border border-slate-800/90 rounded-2xl p-4 shadow-2xl flex flex-col gap-3.5">
+        <!-- 1. Clickable Section Header: Cyan Bar + POWER TELEMETRY -->
+        <div id="telem-header" role="button" tabindex="0" title="Click header to minimize or restore this panel" class="cursor-pointer select-none flex items-center justify-between group border-b border-slate-800/90 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span class="w-1.5 h-4 bg-[#00F0FF] shadow-[0_0_8px_#00F0FF] shrink-0"></span>
+            <h2 class="text-xs font-bold tracking-[0.14em] text-[#00F0FF] uppercase font-mono group-hover:text-cyan-200 transition-colors">
+              POWER TELEMETRY
+            </h2>
+          </div>
+          <div class="flex items-center gap-1 text-[10px] font-mono text-slate-400 group-hover:text-slate-200">
+            <span id="telem-min-label">Minimize</span>
+            <span id="telem-min-arrow" class="text-[#00F0FF] text-xs">▾</span>
+          </div>
+        </div>
+
+        <div id="telem-body" class="flex flex-col gap-3.5">
+          <!-- 2. NET EFFICIENCY GAIN Hero Card -->
+          <div class="rounded-xl border border-[#00F0FF]/40 bg-gradient-to-b from-[#0d2a3a]/90 to-[#0a1926]/95 px-4 py-3.5 text-center shadow-[inset_0_0_24px_rgba(0,240,255,0.08)]">
+            <div class="text-[11px] font-bold tracking-[0.12em] text-slate-300 uppercase">
+              NET EFFICIENCY GAIN
+            </div>
+            <div id="net-gain-badge" class="text-4xl font-bold font-mono tabular-nums text-[#00F0FF] drop-shadow-[0_0_14px_rgba(0,240,255,0.45)] my-1">
+              +10.8%
+            </div>
+            <div class="text-[11px] text-slate-400">
+              Active Dual-Axis vs. Fixed Baseline (Max 90% Cap)
+            </div>
+          </div>
+
+          <!-- 3. METRIC / ACTIVE / PASSIVE Comparison Table Card -->
+          <div class="rounded-xl border border-slate-800/90 bg-[#101827]/90 px-4 py-3">
+            <div class="grid grid-cols-3 items-center border-b border-slate-800 pb-2 mb-2.5 text-[11px] font-mono tracking-wider uppercase">
+              <span class="text-slate-400 font-semibold text-left">METRIC</span>
+              <span class="text-[#00F0FF] font-bold text-right">ACTIVE</span>
+              <span class="text-[#F59E0B] font-bold text-right">PASSIVE</span>
+            </div>
+
+            <div class="space-y-2 text-xs font-mono tabular-nums">
+              <div class="grid grid-cols-3 items-center">
+                <span class="text-slate-300 font-sans">Instant Pwr</span>
+                <span id="active-watt-val" class="text-[#00F0FF] font-semibold text-right">19.62 W</span>
+                <span id="passive-watt-val" class="text-[#F59E0B] font-semibold text-right">17.70 W</span>
+              </div>
+
+              <div class="grid grid-cols-3 items-center">
+                <span class="text-slate-300 font-sans">Voltage</span>
+                <span id="active-volt-val" class="text-[#00F0FF] font-semibold text-right">18.0 V</span>
+                <span id="passive-volt-val" class="text-[#F59E0B] font-semibold text-right">17.7 V</span>
+              </div>
+
+              <div class="grid grid-cols-3 items-center">
+                <span class="text-slate-300 font-sans">Current</span>
+                <span id="active-amp-val" class="text-[#00F0FF] font-semibold text-right">1.09 A</span>
+                <span id="passive-amp-val" class="text-[#F59E0B] font-semibold text-right">1.00 A</span>
+              </div>
+
+              <div class="grid grid-cols-3 items-center">
+                <span class="text-slate-300 font-sans">Yield (Wh)</span>
+                <span id="active-wh-val" class="text-[#00F0FF] font-semibold text-right">79.85 Wh</span>
+                <span id="passive-wh-val" class="text-[#F59E0B] font-semibold text-right">56.40 Wh</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. POWER OUTPUT vs TIME Chart Card -->
+          <div class="rounded-xl border border-slate-800/90 bg-[#101827]/90 p-3.5 flex flex-col gap-2.5">
+            <div class="flex items-center justify-between text-[11px] font-mono tracking-wider uppercase">
+              <span class="font-bold text-slate-300">POWER OUTPUT vs TIME</span>
+              <span class="font-bold text-[#00F0FF]">SOLAR PROFILE</span>
+            </div>
+
+            <!-- Centered Legend Row with Outlined Squares -->
+            <div class="flex items-center justify-center gap-5 text-[11px] text-slate-300">
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-3 border-2 border-[#00F0FF] bg-[#00F0FF]/20 inline-block"></span>
+                <span>Active Tracker</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-3 border-2 border-[#F59E0B] bg-[#F59E0B]/20 inline-block"></span>
+                <span>Fixed Passive</span>
+              </div>
+            </div>
+
+            <div class="relative w-full h-[135px]">
+              <canvas id="telemetry-chart" class="w-full h-full block"></canvas>
+            </div>
+          </div>
+
+          <!-- 5. Bottom Sun / Panel / Dev Telemetry Strip -->
+          <div class="rounded-lg border border-slate-800/90 bg-[#080d18]/95 px-3 py-2 flex items-center justify-between text-[11px] font-mono tabular-nums">
+            <div class="flex items-center gap-1">
+              <span class="text-slate-400">☀ Sun:</span>
+              <span id="footer-sun-angle" class="text-[#F59E0B] font-semibold">-21.9°</span>
+            </div>
+
+            <div class="flex items-center gap-1">
+              <span class="text-slate-400">⬡ Panel:</span>
+              <span id="footer-panel-angle" class="text-[#00F0FF] font-semibold">-21.9°</span>
+            </div>
+
+            <div class="flex items-center gap-1">
+              <span class="text-slate-400">Dev:</span>
+              <span id="footer-dev-angle" class="text-[#00F0FF] font-semibold">0.0°</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- BOTTOM DOCK: Sun Timeline Scrubber, Cloud Disruptor & Live Arduino Serial Monitor -->
+    <div class="pointer-events-auto w-full max-w-[960px] mx-auto px-4 pb-3 flex flex-col items-center">
+      <div class="flex items-center gap-2 mb-1.5">
+        <button type="button" id="collapse-hud-btn" class="px-3 py-1 rounded-t-lg bg-[#111827]/95 border border-b-0 border-slate-800 text-[11px] font-medium text-slate-300 hover:text-white flex items-center gap-1.5 cursor-pointer shadow-md">
+          <span class="text-[#00F0FF]">▾</span>
+          <span id="collapse-hud-text">Collapse HUD · Zen Mode (H)</span>
+        </button>
+      </div>
+
+      <div class="w-full bg-[#111827]/95 border border-slate-800/90 rounded-xl p-3.5 shadow-2xl flex flex-col gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-1.5">
+            <button type="button" id="autocycle-btn" class="px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 border transition-colors whitespace-nowrap shrink-0 cursor-pointer bg-[#00F0FF]/15 border-[#00F0FF]/60 text-[#00F0FF]">
+              <span id="autocycle-text">Auto-Cycle: ON</span>
+            </button>
+
+            <div class="flex items-center bg-slate-900 p-0.5 rounded-lg border border-slate-800">
+              <button type="button" data-speed="1" class="speed-btn px-2 py-1 text-[11px] font-mono rounded-md transition-colors cursor-pointer bg-slate-800 text-[#00F0FF] font-semibold">1x</button>
+              <button type="button" data-speed="2" class="speed-btn px-2 py-1 text-[11px] font-mono rounded-md transition-colors cursor-pointer text-slate-400 hover:text-slate-200">2x</button>
+              <button type="button" data-speed="5" class="speed-btn px-2 py-1 text-[11px] font-mono rounded-md transition-colors cursor-pointer text-slate-400 hover:text-slate-200">5x</button>
+            </div>
+          </div>
+
+          <div class="flex-1 min-w-[220px] flex items-center gap-3">
+            <div class="w-[126px] flex items-center gap-1.5 text-xs font-mono tabular-nums whitespace-nowrap shrink-0">
+              <span class="text-[#F59E0B]">☀</span>
+              <span id="time-text" class="text-slate-200 font-semibold">10:15</span>
+              <span id="sun-deg-text" class="text-slate-400">(-22° E)</span>
+            </div>
+            <input id="time-slider" type="range" min="6.0" max="18.0" step="0.05" value="10.25" aria-label="Solar Time of Day Scrubber (06:00 to 18:00)" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-[#00F0FF]" />
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button type="button" id="cloud-btn" class="px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 border transition-colors whitespace-nowrap shrink-0 cursor-pointer bg-slate-800 border-slate-700 text-slate-300 hover:text-white">
+              <span id="cloud-btn-text">Cloud Disruptor</span>
+            </button>
+
+            <button type="button" id="serial-toggle-btn" class="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-slate-800 border border-slate-700 text-slate-300 hover:text-white flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer">
+              <span class="text-[#00F0FF]">&gt;_</span>
+              <span>Serial</span>
+            </button>
+
+            <button type="button" id="download-html-btn" title="Download self-contained single-file index.html" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300 hover:text-white flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer">
+              <span class="text-[#00F0FF]">⬇</span>
+              <span class="hidden sm:inline">index.html</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="serial-monitor" class="bg-[#090D16] border border-slate-800/90 rounded-lg px-3 py-2 font-mono text-[11px] leading-relaxed text-slate-300 h-[76px] overflow-hidden">
+          <div class="truncate tabular-nums text-slate-300">
+            <span class="text-[#00F0FF] mr-1.5">&gt;</span>[10:15:00] BOOT: Arduino UNO R3 Dual-Axis 4-LDR Gimbal Tracker (SG90 0°-180°)
+          </div>
+          <div class="truncate tabular-nums text-slate-300">
+            <span class="text-[#00F0FF] mr-1.5">&gt;</span>[10:15:01] A0:892 A1:890 A2:888 A3:891 (ΔE:+2 ΔA:-1) | D2_YAW: 64° | D13_PITCH: 116° | PWR: 19.62W (+10.8%)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 100% Self-Contained Three.js Digital Twin & Telemetry Simulation      -->
+  <!-- ===================================================================== -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+    const CAMERA_PRESETS = {
+      overview: { pos: [0.0, 6.2, 11.8], target: [0.0, 2.3, 0.0] },
+      arduino: { pos: [-4.9, 3.0, 4.3], target: [-3.6, 1.55, 0.75] },
+      ldrs: { pos: [-3.6, 5.2, 3.8], target: [-3.6, 3.65, 0.5] },
+      servo: { pos: [-1.4, 3.6, 3.5], target: [-3.6, 2.65, 0.0] },
+      pv: { pos: [0.0, 6.8, 8.8], target: [0.0, 2.8, 0.0] },
+    };
+
+    // Dark Solar System Activation / Boot Loading Sequence
+    (function runBootActivationSequence() {
+      const bootOverlay = document.getElementById('boot-overlay');
+      const bootBar = document.getElementById('boot-progress-bar');
+      const bootPct = document.getElementById('boot-pct-text');
+      const startTime = performance.now();
+      const durationMs = 1750;
+
+      function stepBoot(now) {
+        const elapsed = now - startTime;
+        const pct = Math.min(100, Math.round((elapsed / durationMs) * 100));
+        if (bootBar) bootBar.style.width = `${pct}%`;
+        if (bootPct) bootPct.textContent = `${pct}%`;
+
+        for (let idx = 0; idx < 4; idx++) {
+          const threshold = (idx + 1) * 25;
+          const active = pct >= idx * 25 && pct < threshold;
+          const done = pct >= threshold;
+          const rowEl = document.getElementById(`boot-step-${idx}`);
+          const statusEl = document.getElementById(`boot-status-${idx}`);
+          if (rowEl && statusEl) {
+            rowEl.className = `flex items-center justify-between gap-2 ${
+              done ? 'text-emerald-400' : active ? 'text-[#00F0FF]' : 'text-slate-600'
+            }`;
+            statusEl.textContent = done ? 'OK' : active ? '...' : 'WAIT';
+          }
+        }
+
+        if (pct < 100) {
+          requestAnimationFrame(stepBoot);
+        } else if (bootOverlay) {
+          bootOverlay.classList.remove('opacity-100');
+          bootOverlay.classList.add('opacity-0', 'pointer-events-none');
+          setTimeout(() => {
+            bootOverlay.style.display = 'none';
+          }, 550);
+        }
+      }
+
+      requestAnimationFrame(stepBoot);
+    })();
+
+    function formatSolarTime(hoursFloat) {
+      const totalMinutes = Math.round(hoursFloat * 60);
+      const hh = Math.floor(totalMinutes / 60);
+      const mm = totalMinutes % 60;
+      return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+    }
+
+    // -------------------------------------------------------------------------
+    // Procedural Canvas Textures (100% Ported from SolarTrackerApp.tsx)
+    // -------------------------------------------------------------------------
+    function createPVModuleTexture(maxAnisotropy) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 320;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#061224';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const cols = 10;
+      const rows = 6;
+      const padX = 12;
+      const padY = 12;
+      const gap = 4;
+      const cellW = (canvas.width - padX * 2 - gap * (cols - 1)) / cols;
+      const cellH = (canvas.height - padY * 2 - gap * (rows - 1)) / rows;
+
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(6, 6, canvas.width - 12, canvas.height - 12);
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const x = padX + c * (cellW + gap);
+          const y = padY + r * (cellH + gap);
+
+          ctx.fillStyle = '#0c2957';
+          ctx.fillRect(x, y, cellW, cellH);
+
+          ctx.fillStyle = 'rgba(203, 213, 225, 0.52)';
+          ctx.fillRect(x + cellW * 0.28, y + 1, 1.2, cellH - 2);
+          ctx.fillRect(x + cellW * 0.72, y + 1, 1.2, cellH - 2);
+        }
+      }
+
+      const map = new THREE.CanvasTexture(canvas);
+      map.colorSpace = THREE.SRGBColorSpace;
+      map.anisotropy = maxAnisotropy;
+      return { map };
+    }
+
+    function createBreadboardTexture(maxAnisotropy) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, 256, 160);
+
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(14, 10, 228, 2);
+      ctx.fillRect(14, 148, 228, 2);
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(14, 22, 228, 2);
+      ctx.fillRect(14, 136, 228, 2);
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(10, 74, 236, 12);
+
+      ctx.fillStyle = '#334155';
+      for (let col = 18; col <= 238; col += 8) {
+        for (let row = 32; row <= 66; row += 8) {
+          ctx.fillRect(col, row, 3, 3);
+        }
+        for (let row = 92; row <= 126; row += 8) {
+          ctx.fillRect(col, row, 3, 3);
+        }
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = maxAnisotropy;
+      return tex;
+    }
+
+    function createResistorTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#e6ccb2';
+      ctx.fillRect(0, 0, 128, 32);
+
+      ctx.fillStyle = '#7f2b0a';
+      ctx.fillRect(22, 0, 10, 32);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(46, 0, 10, 32);
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(70, 0, 10, 32);
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(100, 0, 8, 32);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    function createRealisticGroundTexture(maxAnisotropy) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 1024;
+      const ctx = canvas.getContext('2d');
+
+      const baseGrad = ctx.createRadialGradient(512, 512, 40, 512, 512, 720);
+      baseGrad.addColorStop(0, '#4d5d43');
+      baseGrad.addColorStop(0.45, '#3f5238');
+      baseGrad.addColorStop(0.85, '#4a4538');
+      baseGrad.addColorStop(1, '#3b372d');
+      ctx.fillStyle = baseGrad;
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      let seed = 1337;
+      const rand = () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+
+      for (let i = 0; i < 4500; i++) {
+        const x = rand() * 1024;
+        const y = rand() * 1024;
+        const r = 2 + rand() * 14;
+        const tone = rand();
+        if (tone < 0.45) {
+          ctx.fillStyle = 'rgba(54, 78, 42, 0.18)';
+        } else if (tone < 0.8) {
+          ctx.fillStyle = 'rgba(92, 83, 62, 0.16)';
+        } else {
+          ctx.fillStyle = 'rgba(34, 49, 29, 0.20)';
+        }
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (let i = 0; i < 12000; i++) {
+        const x = rand() * 1024;
+        const y = rand() * 1024;
+        const sz = 1 + rand() * 2.2;
+        ctx.fillStyle = rand() > 0.5 ? 'rgba(210, 198, 174, 0.16)' : 'rgba(28, 33, 24, 0.22)';
+        ctx.fillRect(x, y, sz, sz);
+      }
+
+      const map = new THREE.CanvasTexture(canvas);
+      map.colorSpace = THREE.SRGBColorSpace;
+      map.wrapS = THREE.RepeatWrapping;
+      map.wrapT = THREE.RepeatWrapping;
+      map.repeat.set(8, 8);
+      map.anisotropy = maxAnisotropy;
+
+      const bumpCanvas = document.createElement('canvas');
+      bumpCanvas.width = 512;
+      bumpCanvas.height = 512;
+      const bCtx = bumpCanvas.getContext('2d');
+      bCtx.fillStyle = '#808080';
+      bCtx.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 9000; i++) {
+        const x = rand() * 512;
+        const y = rand() * 512;
+        const sz = 1 + rand() * 3;
+        bCtx.fillStyle = rand() > 0.5 ? '#b8b8b8' : '#484848';
+        bCtx.fillRect(x, y, sz, sz);
+      }
+      const bumpMap = new THREE.CanvasTexture(bumpCanvas);
+      bumpMap.colorSpace = THREE.NoColorSpace;
+      bumpMap.wrapS = THREE.RepeatWrapping;
+      bumpMap.wrapT = THREE.RepeatWrapping;
+      bumpMap.repeat.set(10, 10);
+      bumpMap.anisotropy = maxAnisotropy;
+
+      return { map, bumpMap };
+    }
+
+    function createContactShadowTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+      const grad = ctx.createRadialGradient(64, 64, 6, 64, 64, 60);
+      grad.addColorStop(0, 'rgba(0, 0, 0, 0.72)');
+      grad.addColorStop(0.55, 'rgba(0, 0, 0, 0.32)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 128, 128);
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    function createCompassRingTexture(maxAnisotropy) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 512, 512);
+
+      const cx = 256;
+      const cy = 256;
+      const outerR = 240;
+
+      ctx.strokeStyle = 'rgba(9, 13, 22, 0.65)';
+      ctx.lineWidth = 22;
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR - 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.85)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      for (let deg = 0; deg < 360; deg += 10) {
+        const rad = (deg * Math.PI) / 180;
+        const isMajor = deg % 30 === 0;
+        const r1 = outerR - (isMajor ? 12 : 6);
+        const r2 = outerR;
+        ctx.strokeStyle = isMajor ? 'rgba(255, 251, 235, 0.95)' : 'rgba(203, 213, 225, 0.55)';
+        ctx.lineWidth = isMajor ? 2.5 : 1.2;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(rad) * r1, cy + Math.sin(rad) * r1);
+        ctx.lineTo(cx + Math.cos(rad) * r2, cy + Math.sin(rad) * r2);
+        ctx.stroke();
+      }
+
+      ctx.font = '700 15px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      ctx.fillStyle = 'rgba(9, 13, 22, 0.82)';
+      ctx.fillRect(14, cy - 12, 108, 24);
+      ctx.fillRect(390, cy - 12, 108, 24);
+      ctx.fillRect(cx - 115, 456, 230, 24);
+
+      ctx.fillStyle = '#00F0FF';
+      ctx.fillText('EAST · 06:00', 68, cy);
+
+      ctx.fillStyle = '#F59E0B';
+      ctx.fillText('WEST · 18:00', 444, cy);
+
+      ctx.fillStyle = '#F8FAFC';
+      ctx.fillText('SOLAR AZIMUTH · 12:00 NOON', cx, 468);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = maxAnisotropy;
+      return tex;
+    }
+
+    // -------------------------------------------------------------------------
+    // Prime Base Physical Constants (Single Source of Truth)
+    // -------------------------------------------------------------------------
+    const SOLAR_CONSTANTS = {
+      P_MAX_STC: 20.0,
+      V_OC: 21.6,
+      V_MP: 18.0,
+      I_SC: 1.22,
+      I_MP: 1.11,
+      DIFFUSE_FRACTION: 0.08,
+      MAX_EFFICIENCY_GAIN_PCT: 90.0,
+    };
+
+    function computeBoundedEfficiencyGainPct(pAct, pPas) {
+      if (pAct <= pPas || pPas <= 0.001) return 0.0;
+      const rawGainPct = ((pAct - pPas) / pPas) * 100.0;
+      const ceiling = SOLAR_CONSTANTS.MAX_EFFICIENCY_GAIN_PCT; // 90.0%
+      const exponent = 3.2;
+      const asymptoticGain =
+        (rawGainPct * ceiling) /
+        Math.pow(
+          Math.pow(rawGainPct, exponent) + Math.pow(ceiling, exponent),
+          1.0 / exponent
+        );
+      return Math.min(ceiling, Math.max(0.0, asymptoticGain));
+    }
+
+    function deriveSolarPhysicsAtTime(t, cloudCover = 0, trackErrRad = 0) {
+      const clampedT = THREE.MathUtils.clamp(t, 6.0, 18.0);
+      const alpha = Math.max(0, Math.sin(((clampedT - 6.0) / 12.0) * Math.PI));
+      const cloudAttenuation = 1.0 - cloudCover * 0.62;
+      const gAtm = Math.max(0, 0.25 + 0.75 * Math.pow(alpha, 0.38)) * cloudAttenuation;
+
+      // Symmetric Solar Noon Alignment (12:00 PM) + Bounded 90.0% Max Efficiency Gain:
+      // At t = 12.0, hourAngleRad = 0 -> cosThetaPas = 1.0 and cosThetaAct = 1.0,
+      // guaranteeing P_act(12.0) === P_pas(12.0) with +0.0% Net Efficiency Gain at solar noon.
+      const dayProgress = (clampedT - 12.0) / 6.0;
+      const hourAngleRad = dayProgress * (Math.PI * 0.5);
+      const cosThetaPas = 0.51 + 0.49 * Math.pow(Math.cos(hourAngleRad), 1.25);
+      const cosThetaAct = trackErrRad > 0.05 ? Math.max(0, Math.cos(trackErrRad)) : 1.0;
+
+      const directWeight = 1.0 - SOLAR_CONSTANTS.DIFFUSE_FRACTION;
+      const etaAct = THREE.MathUtils.clamp((directWeight * cosThetaAct + SOLAR_CONSTANTS.DIFFUSE_FRACTION) * gAtm, 0.0, 1.0);
+      const etaPas = THREE.MathUtils.clamp((directWeight * cosThetaPas + SOLAR_CONSTANTS.DIFFUSE_FRACTION) * gAtm, 0.0, 1.0);
+
+      const computeLogVoltage = (eta) => {
+        if (eta <= 0.0001) return 0;
+        const vRaw = SOLAR_CONSTANTS.V_MP * (0.72 + (0.28 * Math.log(1 + 9 * eta)) / Math.LN10);
+        const lowIrradianceRamp = eta < 0.01 ? eta / 0.01 : 1.0;
+        return Math.round(vRaw * lowIrradianceRamp * 10) / 10;
+      };
+
+      const vAct = computeLogVoltage(etaAct);
+      const vPas = computeLogVoltage(etaPas);
+
+      const iAct = Math.round(SOLAR_CONSTANTS.I_MP * etaAct * 100) / 100;
+      const iPas = Math.round(SOLAR_CONSTANTS.I_MP * etaPas * 100) / 100;
+
+      const pAct = Number((vAct * iAct).toFixed(2));
+      const pPas = Number((vPas * iPas).toFixed(2));
+
+      return { alpha, gAtm, etaAct, etaPas, vAct, vPas, iAct, iPas, pAct, pPas };
+    }
+
+    // -------------------------------------------------------------------------
+    // Daily Curve Pre-Computation & Custom HTML5 Canvas Chart
+    // -------------------------------------------------------------------------
+    const CHART_SAMPLES = 49;
+    const CHART_ACTIVE_BASELINE = [];
+    const CHART_PASSIVE_BASELINE = [];
+
+    for (let i = 0; i < CHART_SAMPLES; i++) {
+      const h = 6 + (i / (CHART_SAMPLES - 1)) * 12;
+      const { pAct, pPas } = deriveSolarPhysicsAtTime(h, 0);
+      CHART_PASSIVE_BASELINE.push(pPas);
+      CHART_ACTIVE_BASELINE.push(pAct);
+    }
+
+    function computeCumulativeEnergyUpTo(timeOfDay, cloudCover = 0) {
+      let activeWh = 0;
+      let passiveWh = 0;
+      const dt = 0.05;
+      const targetT = THREE.MathUtils.clamp(timeOfDay, 6.0, 18.0);
+      for (let tau = 6.0; tau < targetT; tau += dt) {
+        const step = Math.min(dt, targetT - tau);
+        const { pAct, pPas } = deriveSolarPhysicsAtTime(tau + step * 0.5, cloudCover);
+        activeWh += pAct * step;
+        passiveWh += pPas * step;
+      }
+      return {
+        activeWh: Math.max(0.1, activeWh),
+        passiveWh: Math.max(0.1, passiveWh),
+      };
+    }
+
+    const chartCanvas = document.getElementById('telemetry-chart');
+    function drawTelemetryChart(timeOfDay, activePowerW, cloudFactor) {
+      if (!chartCanvas) return;
+      const ctx = chartCanvas.getContext('2d');
+      if (!ctx) return;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const width = chartCanvas.clientWidth || 320;
+      const height = chartCanvas.clientHeight || 135;
+      const targetW = Math.round(width * dpr);
+      const targetH = Math.round(height * dpr);
+
+      if (chartCanvas.width !== targetW || chartCanvas.height !== targetH) {
+        chartCanvas.width = targetW;
+        chartCanvas.height = targetH;
+      }
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, height);
+
+      const padLeft = 24;
+      const padRight = 10;
+      const padTop = 10;
+      const padBottom = 22;
+      const plotW = width - padLeft - padRight;
+      const plotH = height - padTop - padBottom;
+
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.10)';
+      ctx.lineWidth = 1;
+      ctx.font = '500 10px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#64748b';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+
+      [0, 5, 10, 15, 22].forEach((watt) => {
+        const y = padTop + plotH - (watt / 22) * plotH;
+        ctx.beginPath();
+        ctx.moveTo(padLeft, y);
+        ctx.lineTo(width - padRight, y);
+        ctx.stroke();
+        ctx.fillText(`${watt}`, padLeft - 6, y);
+      });
+
+      const xTicks = [
+        { h: 6.0, label: '06:00' },
+        { h: 7.75, label: '07:45' },
+        { h: 9.5, label: '09:30' },
+        { h: 11.25, label: '11:15' },
+        { h: 13.0, label: '13:00' },
+        { h: 14.75, label: '14:45' },
+        { h: 16.5, label: '16:30' },
+      ];
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      xTicks.forEach(({ h, label }) => {
+        const x = padLeft + ((h - 6) / 12) * plotW;
+        ctx.beginPath();
+        ctx.moveTo(x, padTop);
+        ctx.lineTo(x, padTop + plotH);
+        ctx.stroke();
+        ctx.fillText(label, x, height - padBottom + 6);
+      });
+
+      const getXY = (idx, wattVal) => {
+        const x = padLeft + (idx / (CHART_SAMPLES - 1)) * plotW;
+        const y = padTop + plotH - (wattVal / 22) * plotH;
+        return { x, y };
+      };
+
+      ctx.beginPath();
+      for (let i = 0; i < CHART_SAMPLES; i++) {
+        const h = 6 + (i / (CHART_SAMPLES - 1)) * 12;
+        const pPasSample = cloudFactor > 0.001 ? deriveSolarPhysicsAtTime(h, cloudFactor).pPas : CHART_PASSIVE_BASELINE[i];
+        const { x, y } = getXY(i, pPasSample);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = '#F59E0B';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.lineTo(padLeft + plotW, padTop + plotH);
+      ctx.lineTo(padLeft, padTop + plotH);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.12)';
+      ctx.fill();
+
+      ctx.beginPath();
+      for (let i = 0; i < CHART_SAMPLES; i++) {
+        const h = 6 + (i / (CHART_SAMPLES - 1)) * 12;
+        const pActSample = cloudFactor > 0.001 ? deriveSolarPhysicsAtTime(h, cloudFactor).pAct : CHART_ACTIVE_BASELINE[i];
+        const { x, y } = getXY(i, pActSample);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = '#00F0FF';
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+
+      ctx.lineTo(padLeft + plotW, padTop + plotH);
+      ctx.lineTo(padLeft, padTop + plotH);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.12)';
+      ctx.fill();
+
+      const timeProgress = Math.max(0, Math.min(1, (timeOfDay - 6) / 12));
+      const curX = padLeft + timeProgress * plotW;
+      const actY = padTop + plotH - (activePowerW / 22) * plotH;
+
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = '#00F0FF';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(curX, actY);
+      ctx.lineTo(curX, padTop + plotH);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.35)';
+      ctx.beginPath();
+      ctx.arc(curX, actY, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#00F0FF';
+      ctx.beginPath();
+      ctx.arc(curX, actY, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // -------------------------------------------------------------------------
+    // State & UI Event Bindings
+    // -------------------------------------------------------------------------
+    const sim = {
+      timeOfDay: 10.25,
+      autoCycle: true,
+      cycleSpeed: 1,
+      servoYawPWM: 64,
+      servoPitchPWM: 116,
+      panelTiltDeg: 26.0,
+      panelYawDeg: -26.2,
+      cloudTarget: 0,
+      cloudCurrent: 0,
+      xrayLabels: true,
+      hudCollapsed: false,
+      cameraPresetActive: false,
+      desiredCamPos: new THREE.Vector3(...CAMERA_PRESETS.overview.pos),
+      desiredCamTarget: new THREE.Vector3(...CAMERA_PRESETS.overview.target),
+      serialLogs: [
+        '[10:15:00] BOOT: Arduino UNO R3 Dual-Axis 4-LDR Gimbal Tracker (SG90 0°-180° Full Sweep)',
+        '[10:15:01] A0:892 A1:890 A2:888 A3:891 (ΔE:+2 ΔA:-1) | D2_YAW: 64° | D13_PITCH: 116° | PWR: 19.62W (+10.8%)',
+      ],
+    };
+
+    // Click-to-Minimize / Restore POWER TELEMETRY HUD Header
+    let telemMinimized = false;
+
+    document.getElementById('telem-header').addEventListener('click', () => {
+      telemMinimized = !telemMinimized;
+      document.getElementById('telem-body').style.display = telemMinimized ? 'none' : '';
+      document.getElementById('telem-min-label').textContent = telemMinimized ? 'Restore' : 'Minimize';
+      document.getElementById('telem-min-arrow').textContent = telemMinimized ? '▸' : '▾';
+      const hdr = document.getElementById('telem-header');
+      hdr.classList.toggle('border-b', !telemMinimized);
+      hdr.classList.toggle('pb-3', !telemMinimized);
+      if (!telemMinimized) {
+        requestAnimationFrame(() => {
+          const { pAct } = deriveSolarPhysicsAtTime(sim.timeOfDay, sim.cloudCurrent);
+          drawTelemetryChart(sim.timeOfDay, pAct, sim.cloudCurrent);
+        });
+      }
+    });
+
+    function selectSubsystem(id) {
+      const preset = CAMERA_PRESETS[id] || CAMERA_PRESETS.overview;
+      sim.desiredCamPos.set(...preset.pos);
+      sim.desiredCamTarget.set(...preset.target);
+      sim.cameraPresetActive = true;
+      document.querySelectorAll('.nav-cam-btn').forEach((btn) => {
+        const active = btn.dataset.cam === id;
+        btn.classList.toggle('text-[#00F0FF]', active);
+        btn.classList.toggle('underline', active);
+        btn.classList.toggle('underline-offset-4', active);
+      });
+    }
+
+    document.querySelectorAll('.nav-cam-btn').forEach((btn) => {
+      btn.addEventListener('click', () => selectSubsystem(btn.dataset.cam));
+    });
+    document.getElementById('brand-reset').addEventListener('click', (e) => {
+      e.preventDefault();
+      selectSubsystem('overview');
+    });
+
+    document.getElementById('toggle-xray-btn').addEventListener('click', () => {
+      sim.xrayLabels = !sim.xrayLabels;
+      document.getElementById('xray-overlay').style.display = sim.xrayLabels && !sim.hudCollapsed ? 'block' : 'none';
+      document.getElementById('toggle-xray-text').textContent = sim.xrayLabels ? '3D Labels: Active' : '3D Labels: Hidden';
+    });
+
+    document.getElementById('autocycle-btn').addEventListener('click', () => {
+      sim.autoCycle = !sim.autoCycle;
+      document.getElementById('autocycle-text').textContent = sim.autoCycle ? 'Auto-Cycle: ON' : 'Auto-Cycle: Paused';
+    });
+
+    document.querySelectorAll('.speed-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        sim.cycleSpeed = Number(btn.dataset.speed);
+        document.querySelectorAll('.speed-btn').forEach((b) => {
+          const isSel = Number(b.dataset.speed) === sim.cycleSpeed;
+          b.className = `speed-btn px-2 py-1 text-[11px] font-mono rounded-md transition-colors cursor-pointer ${
+            isSel ? 'bg-slate-800 text-[#00F0FF] font-semibold' : 'text-slate-400 hover:text-slate-200'
+          }`;
+        });
+      });
+    });
+
+    document.getElementById('time-slider').addEventListener('input', (e) => {
+      sim.timeOfDay = parseFloat(e.target.value);
+    });
+
+    let cloudActive = false;
+    document.getElementById('cloud-btn').addEventListener('click', () => {
+      cloudActive = !cloudActive;
+      sim.cloudTarget = cloudActive ? 0.58 : 0.0;
+      document.getElementById('cloud-btn-text').textContent = cloudActive ? 'Cloud Disruptor: Active' : 'Cloud Disruptor';
+    });
+
+    let serialExpanded = true;
+    document.getElementById('serial-toggle-btn').addEventListener('click', () => {
+      serialExpanded = !serialExpanded;
+      document.getElementById('serial-monitor').style.display = serialExpanded && !sim.hudCollapsed ? 'block' : 'none';
+    });
+
+    function toggleHudCollapsed() {
+      sim.hudCollapsed = !sim.hudCollapsed;
+      document.getElementById('middle-panels').style.display = sim.hudCollapsed ? 'none' : '';
+      document.getElementById('xray-overlay').style.display = sim.xrayLabels && !sim.hudCollapsed ? 'block' : 'none';
+      document.getElementById('serial-monitor').style.display = serialExpanded && !sim.hudCollapsed ? 'block' : 'none';
+      document.getElementById('collapse-hud-text').textContent = sim.hudCollapsed
+        ? 'Show Telemetry HUD (H)'
+        : 'Collapse HUD · Zen Mode (H)';
+    }
+
+    document.getElementById('collapse-hud-btn').addEventListener('click', toggleHudCollapsed);
+    window.addEventListener('keydown', (e) => {
+      if (e.key.toLowerCase() === 'h' && document.activeElement?.tagName !== 'INPUT') {
+        toggleHudCollapsed();
+      }
+    });
+
+    document.getElementById('download-html-btn').addEventListener('click', () => {
+      const htmlString = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([htmlString], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'index.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // -------------------------------------------------------------------------
+    // Three.js WebGL Scene Setup (100% Ported from SolarTrackerApp.tsx)
+    // -------------------------------------------------------------------------
+    const container = document.getElementById('webgl-container');
+    const isSoftwareGl = (() => {
+      const testCanvas = document.createElement('canvas');
+      const gl = testCanvas.getContext('webgl2');
+      if (!gl) return true;
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      const param = ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER;
+      const gpu = String(gl.getParameter(param));
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      return /SwiftShader|llvmpipe|softpipe|Software|Basic Render/i.test(gpu);
+    })();
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: !isSoftwareGl,
+      powerPreference: 'high-performance',
+    });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.setPixelRatio(isSoftwareGl ? 1 : Math.min(window.devicePixelRatio || 1, 1.75));
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.shadowMap.enabled = !isSoftwareGl;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const horizonFogColor = new THREE.Color(0x8ec5fc);
+    scene.background = horizonFogColor;
+    scene.fog = new THREE.FogExp2(0x8ec5fc, 0.009);
+
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmremGenerator.dispose();
+
+    const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 180);
+    camera.position.set(...CAMERA_PRESETS.overview.pos);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(...CAMERA_PRESETS.overview.target);
+    controls.enableDamping = !isSoftwareGl;
+    controls.dampingFactor = 0.07;
+    controls.maxPolarAngle = Math.PI * 0.485;
+    controls.minDistance = 2.4;
+    controls.maxDistance = 30;
+    controls.update();
+
+    controls.addEventListener('start', () => {
+      sim.cameraPresetActive = false;
+    });
+
+    // 1. Realistic Dynamic Atmospheric Sky Dome
+    const skyUniforms = {
+      uSunDir: { value: new THREE.Vector3(-0.4, 0.85, 0.15).normalize() },
+      uTime: { value: 0 },
+      uCloudCover: { value: 0 },
+    };
+
+    const skyMat = new THREE.ShaderMaterial({
+      uniforms: skyUniforms,
+      side: THREE.BackSide,
+      depthWrite: false,
+      vertexShader: `
+        varying vec3 vWorldPos;
+        void main() {
+          vec4 wp = modelMatrix * vec4(position, 1.0);
+          vWorldPos = wp.xyz;
+          gl_Position = projectionMatrix * viewMatrix * wp;
+        }
+      `,
+      fragmentShader: `
+        varying vec3 vWorldPos;
+        uniform vec3 uSunDir;
+        uniform float uTime;
+        uniform float uCloudCover;
+
+        float hash(vec2 p) {
+          return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        }
+        float noise(vec2 p) {
+          vec2 i = floor(p);
+          vec2 f = fract(p);
+          vec2 u = f * f * (3.0 - 2.0 * f);
+          return mix(
+            mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+            mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+            u.y
+          );
+        }
+        float fbm(vec2 p) {
+          float v = 0.0;
+          v += 0.50 * noise(p); p *= 2.02;
+          v += 0.25 * noise(p); p *= 2.03;
+          v += 0.125 * noise(p);
+          return v;
+        }
+
+        void main() {
+          vec3 dir = normalize(vWorldPos);
+          float y = max(0.0, dir.y);
+          float sunElev = clamp(uSunDir.y, 0.0, 1.0);
+
+          vec3 dayZenith = vec3(0.07, 0.28, 0.68);
+          vec3 dayHorizon = vec3(0.58, 0.80, 0.96);
+
+          vec3 duskZenith = vec3(0.10, 0.16, 0.36);
+          vec3 duskHorizon = vec3(0.95, 0.52, 0.24);
+
+          float dayWeight = smoothstep(0.15, 0.65, sunElev);
+          vec3 zenithCol = mix(duskZenith, dayZenith, dayWeight);
+          vec3 horizonCol = mix(duskHorizon, dayHorizon, dayWeight);
+
+          float horizonFactor = pow(1.0 - y, 2.6);
+          vec3 skyCol = mix(zenithCol, horizonCol, horizonFactor);
+
+          float sunDot = max(0.0, dot(dir, uSunDir));
+          float mieHalo = pow(sunDot, 8.0) * 0.42 + pow(sunDot, 64.0) * 0.85;
+          vec3 sunGlowCol = mix(vec3(1.0, 0.55, 0.18), vec3(1.0, 0.95, 0.80), dayWeight);
+          skyCol += sunGlowCol * mieHalo;
+
+          if (dir.y > 0.04) {
+            vec2 cloudUv = dir.xz / (dir.y + 0.18) * 1.4 + vec2(uTime * 0.015, 0.0);
+            float c = fbm(cloudUv);
+            float threshold = mix(0.52, 0.28, uCloudCover);
+            float cloudAlpha = smoothstep(threshold, threshold + 0.28, c) * smoothstep(0.04, 0.22, dir.y);
+            vec3 cloudCol = mix(vec3(0.98, 0.99, 1.0), vec3(0.55, 0.60, 0.68), uCloudCover);
+            cloudCol = mix(vec3(1.0, 0.72, 0.45), cloudCol, dayWeight);
+            skyCol = mix(skyCol, cloudCol, cloudAlpha * 0.65);
+          }
+
+          skyCol *= (1.0 - uCloudCover * 0.28);
+
+          gl_FragColor = vec4(skyCol, 1.0);
+        }
+      `,
+    });
+
+    scene.add(new THREE.Mesh(new THREE.SphereGeometry(110, 40, 24), skyMat));
+
+    const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x4d5d43, 0.95);
+    hemiLight.position.set(0, 25, 0);
+    scene.add(hemiLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfff6e0, 2.8);
+    sunLight.position.set(-8, 9, 2.5);
+    sunLight.castShadow = !isSoftwareGl;
+    sunLight.shadow.mapSize.set(1024, 1024);
+    const d = 10;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.camera.near = 1;
+    sunLight.shadow.camera.far = 32;
+    sunLight.shadow.bias = -0.0005;
+    sunLight.shadow.normalBias = 0.02;
+    scene.add(sunLight);
+
+    const rimLight = new THREE.DirectionalLight(0xbae6fd, 0.5);
+    rimLight.position.set(0, 6, -10);
+    scene.add(rimLight);
+
+    const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
+    const { map: pvMap } = createPVModuleTexture(maxAnisotropy);
+    const breadboardTex = createBreadboardTexture(maxAnisotropy);
+    const resistorTex = createResistorTexture();
+    const { map: groundMap, bumpMap: groundBumpMap } = createRealisticGroundTexture(maxAnisotropy);
+    const contactShadowTex = createContactShadowTexture();
+    const compassTex = createCompassRingTexture(maxAnisotropy);
+
+    const darkSteelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.82, roughness: 0.34 });
+    const brushedAluminumMat = new THREE.MeshStandardMaterial({ color: 0xdbeafe, metalness: 0.85, roughness: 0.22 });
+    const castIronBaseMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.65, roughness: 0.52 });
+    const concretePadMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.08, roughness: 0.85 });
+    const whitePvcMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.08, roughness: 0.32 });
+    const servoHornWhiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.05, roughness: 0.25 });
+    const sg90BlueMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.15, roughness: 0.18, transparent: true, opacity: 0.88 });
+    const brassPinMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.82, roughness: 0.28 });
+    const pvSurfaceMat = new THREE.MeshStandardMaterial({ map: pvMap, metalness: 0.25, roughness: 0.16 });
+    const arduinoPcbMat = new THREE.MeshStandardMaterial({ color: 0x008184, metalness: 0.28, roughness: 0.4 });
+    const icChipMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.2, roughness: 0.55 });
+
+    // 2. Realistic Outdoor Ground Terrain
+    const terrainGeo = new THREE.PlaneGeometry(160, 160, 64, 64);
+    const posAttr = terrainGeo.attributes.position;
+    for (let i = 0; i < posAttr.count; i++) {
+      const vx = posAttr.getX(i);
+      const vy = posAttr.getY(i);
+      const dist = Math.sqrt(vx * vx + vy * vy);
+      if (dist > 13.0) {
+        const edgeFactor = Math.min(1.0, (dist - 13.0) / 28.0);
+        const h = (Math.sin(vx * 0.09) * Math.cos(vy * 0.09) * 2.4 + Math.sin(vx * 0.22 + 1.3) * 0.75 + 1.2) * edgeFactor;
+        posAttr.setZ(i, Math.max(0, h));
+      }
+    }
+    terrainGeo.computeVertexNormals();
+
+    const groundMesh = new THREE.Mesh(
+      terrainGeo,
+      new THREE.MeshStandardMaterial({
+        map: groundMap,
+        bumpMap: groundBumpMap,
+        bumpScale: 0.06,
+        roughness: 0.9,
+        metalness: 0.04,
+      })
+    );
+    groundMesh.rotation.x = -Math.PI / 2;
+    groundMesh.receiveShadow = true;
+    scene.add(groundMesh);
+
+    [-3.6, 3.6].forEach((rx) => {
+      const pad = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.08, 3.8), concretePadMat);
+      pad.position.set(rx, 0.04, 0);
+      pad.receiveShadow = true;
+      pad.castShadow = true;
+      scene.add(pad);
+    });
+
+    const rockGeo = new THREE.DodecahedronGeometry(0.45, 1);
+    const rockMat = new THREE.MeshStandardMaterial({ color: 0x57534e, roughness: 0.88, metalness: 0.05 });
+    const rockInstances = new THREE.InstancedMesh(rockGeo, rockMat, 28);
+    const _dummy = new THREE.Object3D();
+    for (let i = 0; i < 28; i++) {
+      const ang = (i / 28) * Math.PI * 2;
+      const rad = 11.8 + (i % 5) * 2.2;
+      _dummy.position.set(Math.cos(ang) * rad, 0.12, Math.sin(ang) * rad);
+      _dummy.rotation.set(i * 0.7, i * 1.1, 0);
+      const s = 0.5 + (i % 4) * 0.32;
+      _dummy.scale.set(s * 1.2, s * 0.65, s);
+      _dummy.updateMatrix();
+      rockInstances.setMatrixAt(i, _dummy.matrix);
+    }
+    rockInstances.castShadow = true;
+    rockInstances.receiveShadow = true;
+    rockInstances.computeBoundingSphere();
+    scene.add(rockInstances);
+
+    const compassPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(21, 21),
+      new THREE.MeshBasicMaterial({
+        map: compassTex,
+        transparent: true,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
+      })
+    );
+    compassPlane.rotation.x = -Math.PI / 2;
+    compassPlane.position.y = 0.03;
+    scene.add(compassPlane);
+
+    const SOLAR_ARC_RADIUS = 10.2;
+    const arcPoints = [];
+    for (let azDeg = -90; azDeg <= 90; azDeg += 3) {
+      const azRad = THREE.MathUtils.degToRad(azDeg);
+      const elevDeg = 20.0 + 48.0 * Math.cos(azRad);
+      const elevRad = THREE.MathUtils.degToRad(elevDeg);
+      const horizR = SOLAR_ARC_RADIUS * Math.cos(elevRad);
+      arcPoints.push(
+        new THREE.Vector3(
+          Math.sin(azRad) * horizR,
+          Math.sin(elevRad) * SOLAR_ARC_RADIUS,
+          Math.cos(azRad) * horizR
+        )
+      );
+    }
+    const arcCurve = new THREE.CatmullRomCurve3(arcPoints);
+    scene.add(
+      new THREE.Mesh(
+        new THREE.TubeGeometry(arcCurve, 48, 0.032, 8, false),
+        new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.65 })
+      )
+    );
+
+    const sunGroup = new THREE.Group();
+    sunGroup.add(
+      new THREE.Mesh(new THREE.SphereGeometry(0.55, 24, 24), new THREE.MeshBasicMaterial({ color: 0xffffff })),
+      new THREE.Mesh(new THREE.SphereGeometry(0.95, 24, 24), new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.55, depthWrite: false })),
+      new THREE.Mesh(new THREE.SphereGeometry(1.55, 24, 24), new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.25, depthWrite: false }))
+    );
+    scene.add(sunGroup);
+
+    const cloudGroup = new THREE.Group();
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: 0x64748b,
+      roughness: 0.9,
+      metalness: 0.05,
+      transparent: true,
+      opacity: 0.0,
+      depthWrite: false,
+    });
+    [
+      [0, 0, 0, 0.95],
+      [-0.85, -0.12, 0.2, 0.72],
+      [0.85, -0.08, -0.15, 0.78],
+      [-0.35, 0.32, -0.25, 0.65],
+      [0.4, 0.28, 0.25, 0.68],
+    ].forEach(([px, py, pz, r]) => {
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 12), cloudMat);
+      puff.position.set(px, py, pz);
+      cloudGroup.add(puff);
+    });
+    cloudGroup.visible = false;
+    scene.add(cloudGroup);
+
+    function createPVPanelAssembly() {
+      const panelRoot = new THREE.Group();
+      const panelW = 2.85;
+      const panelD = 1.9;
+      const panelT = 0.08;
+
+      const frameBody = new THREE.Mesh(new THREE.BoxGeometry(panelW, panelT, panelD), brushedAluminumMat);
+      frameBody.position.y = 0.06;
+      frameBody.castShadow = true;
+      frameBody.receiveShadow = true;
+      panelRoot.add(frameBody);
+
+      const pvFace = new THREE.Mesh(new THREE.BoxGeometry(panelW - 0.14, 0.025, panelD - 0.14), pvSurfaceMat);
+      pvFace.position.y = 0.105;
+      pvFace.receiveShadow = true;
+      panelRoot.add(pvFace);
+
+      return panelRoot;
+    }
+
+    function createSG90ServoMesh() {
+      const sg90 = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.42, 0.24), sg90BlueMat);
+      body.castShadow = true;
+      sg90.add(body);
+
+      const tabs = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.05, 0.24), sg90BlueMat);
+      tabs.position.y = 0.08;
+      sg90.add(tabs);
+
+      const gearBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.08, 16), sg90BlueMat);
+      gearBoss.position.set(0.1, 0.24, 0);
+      sg90.add(gearBoss);
+
+      const spline = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.06, 12), brassPinMat);
+      spline.position.set(0.1, 0.3, 0);
+      sg90.add(spline);
+
+      return sg90;
+    }
+
+    function addJumperWire(parent, pStart, pMid, pEnd, hexColor) {
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(...pStart),
+        new THREE.Vector3(...pMid),
+        new THREE.Vector3(...pEnd),
+      ]);
+      const wireMesh = new THREE.Mesh(
+        new THREE.TubeGeometry(curve, 16, 0.014, 6, false),
+        new THREE.MeshStandardMaterial({ color: hexColor, roughness: 0.35, metalness: 0.1 })
+      );
+      wireMesh.castShadow = true;
+      parent.add(wireMesh);
+    }
+
+    // =========================================================================
+    // RIG A: Dual-Axis Arduino UNO + Breadboard + U-Bracket SG90 Gimbal Prototype
+    // =========================================================================
+    const activeRig = new THREE.Group();
+    activeRig.position.set(-3.6, 0.08, 0);
+    scene.add(activeRig);
+
+    const activeShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.2, 4.2),
+      new THREE.MeshBasicMaterial({ map: contactShadowTex, transparent: true, depthWrite: false, opacity: 0.65 })
+    );
+    activeShadow.rotation.x = -Math.PI / 2;
+    activeShadow.position.y = 0.01;
+    activeRig.add(activeShadow);
+
+    const protoStandBase = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 1.05, 0.2, 16), castIronBaseMat);
+    protoStandBase.position.y = 0.1;
+    protoStandBase.castShadow = true;
+    activeRig.add(protoStandBase);
+
+    const protoStandPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 1.2, 16), darkSteelMat);
+    protoStandPillar.position.y = 0.75;
+    protoStandPillar.castShadow = true;
+    activeRig.add(protoStandPillar);
+
+    const deckGroup = new THREE.Group();
+    deckGroup.position.set(0, 1.38, 0);
+    activeRig.add(deckGroup);
+
+    const whiteBasePlate = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.12, 2.85), whitePvcMat);
+    whiteBasePlate.castShadow = true;
+    whiteBasePlate.receiveShadow = true;
+    deckGroup.add(whiteBasePlate);
+
+    [
+      [-1.5, -0.08, -1.25],
+      [1.5, -0.08, -1.25],
+      [-1.5, -0.08, 1.25],
+      [1.5, -0.08, 1.25],
+    ].forEach(([fx, fy, fz]) => {
+      const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 12), icChipMat);
+      foot.position.set(fx, fy, fz);
+      deckGroup.add(foot);
+    });
+
+    // Arduino UNO R3
+    const arduinoUno = new THREE.Group();
+    arduinoUno.position.set(-0.82, 0.09, 0.76);
+    deckGroup.add(arduinoUno);
+
+    const unoPcb = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.04, 0.76), arduinoPcbMat);
+    unoPcb.castShadow = true;
+    arduinoUno.add(unoPcb);
+
+    const usbPort = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.16, 0.18), brushedAluminumMat);
+    usbPort.position.set(-0.46, 0.09, -0.18);
+    arduinoUno.add(usbPort);
+
+    const dcJack = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.16), icChipMat);
+    dcJack.position.set(-0.44, 0.09, 0.22);
+    arduinoUno.add(dcJack);
+
+    const atmegaChip = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.06, 0.14), icChipMat);
+    atmegaChip.position.set(0.14, 0.04, 0.12);
+    arduinoUno.add(atmegaChip);
+
+    const digitalHeader = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.09, 0.06), icChipMat);
+    digitalHeader.position.set(0.08, 0.06, -0.32);
+    arduinoUno.add(digitalHeader);
+
+    const analogHeader = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.09, 0.06), icChipMat);
+    analogHeader.position.set(0.08, 0.06, 0.32);
+    arduinoUno.add(analogHeader);
+
+    const rxLedMat = new THREE.MeshStandardMaterial({ color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 2.2 });
+    const txLedMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xf59e0b, emissiveIntensity: 2.0 });
+    const rxLed = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 8), rxLedMat);
+    rxLed.position.set(-0.12, 0.04, -0.1);
+    const txLed = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 8), txLedMat);
+    txLed.position.set(-0.12, 0.04, 0.02);
+    arduinoUno.add(rxLed, txLed);
+
+    // Solderless Mini-Breadboard + 4x 10kOhm Axial Resistors
+    const breadboardGroup = new THREE.Group();
+    breadboardGroup.position.set(0.78, 0.1, 0.76);
+    deckGroup.add(breadboardGroup);
+
+    const bbMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(1.12, 0.08, 0.72),
+      new THREE.MeshStandardMaterial({ map: breadboardTex, roughness: 0.35, metalness: 0.05 })
+    );
+    bbMesh.castShadow = true;
+    breadboardGroup.add(bbMesh);
+
+    const resistorBodyMat = new THREE.MeshStandardMaterial({ map: resistorTex, roughness: 0.4, metalness: 0.1 });
+    const resistorBodyGeo = new THREE.CylinderGeometry(0.026, 0.026, 0.18, 12);
+    const resistorLeadGeo = new THREE.CylinderGeometry(0.007, 0.007, 0.1, 8);
+
+    [-0.36, -0.12, 0.12, 0.36].forEach((rxOff) => {
+      const resGroup = new THREE.Group();
+      resGroup.position.set(rxOff, 0.08, 0);
+
+      const rBody = new THREE.Mesh(resistorBodyGeo, resistorBodyMat);
+      rBody.rotation.x = Math.PI / 2;
+      resGroup.add(rBody);
+
+      const leadFront = new THREE.Mesh(resistorLeadGeo, brushedAluminumMat);
+      leadFront.position.set(0, -0.03, 0.11);
+      const leadBack = new THREE.Mesh(resistorLeadGeo, brushedAluminumMat);
+      leadBack.position.set(0, -0.03, -0.11);
+      resGroup.add(leadFront, leadBack);
+
+      breadboardGroup.add(resGroup);
+    });
+
+    addJumperWire(deckGroup, [0.42, 0.14, 0.85], [-0.1, 0.38, 1.05], [-0.62, 0.14, 1.08], 0x00f0ff);
+    addJumperWire(deckGroup, [0.66, 0.14, 0.85], [0.0, 0.42, 1.1], [-0.52, 0.14, 1.08], 0x22c55e);
+    addJumperWire(deckGroup, [0.9, 0.14, 0.85], [0.1, 0.45, 1.14], [-0.42, 0.14, 1.08], 0xf59e0b);
+    addJumperWire(deckGroup, [1.14, 0.14, 0.85], [0.2, 0.48, 1.18], [-0.32, 0.14, 1.08], 0xa855f7);
+    addJumperWire(deckGroup, [0.32, 0.14, 1.04], [-0.25, 0.28, 1.18], [-0.85, 0.14, 1.08], 0xef4444);
+    addJumperWire(deckGroup, [0.32, 0.14, 0.48], [-0.25, 0.26, 0.55], [-0.78, 0.14, 1.08], 0x1e293b);
+    addJumperWire(deckGroup, [-0.48, 0.14, 0.44], [-0.22, 0.36, 0.1], [-0.08, 0.24, -0.22], 0x38bdf8);
+    addJumperWire(deckGroup, [-0.88, 0.14, 0.44], [-0.45, 0.42, 0.05], [0.15, 0.24, -0.22], 0xfacc15);
+
+    // Axis 1: Base Azimuth / Horizontal Yaw SG90 Servo + White U-Bracket (`yawGroup`)
+    const baseTurretCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.48, 0.34, 20), whitePvcMat);
+    baseTurretCollar.position.set(0, 0.22, -0.25);
+    baseTurretCollar.castShadow = true;
+    deckGroup.add(baseTurretCollar);
+
+    const baseYawServo = createSG90ServoMesh();
+    baseYawServo.position.set(-0.1, 0.32, -0.25);
+    deckGroup.add(baseYawServo);
+
+    const yawGroup = new THREE.Group();
+    yawGroup.position.set(0, 0.58, -0.25);
+    deckGroup.add(yawGroup);
+
+    const yawHornDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.04, 16), servoHornWhiteMat);
+    yawGroup.add(yawHornDisc);
+
+    const yawHornArm = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.045, 0.12), servoHornWhiteMat);
+    yawHornArm.position.y = 0.02;
+    yawGroup.add(yawHornArm);
+
+    const uBracketWidth = 3.16;
+    const uBracketWallHeight = 1.62;
+    const uBracketDepth = 0.38;
+    const uWallThick = 0.11;
+
+    const uBottomBar = new THREE.Mesh(new THREE.BoxGeometry(uBracketWidth, 0.12, uBracketDepth), whitePvcMat);
+    uBottomBar.position.y = 0.08;
+    uBottomBar.castShadow = true;
+    uBottomBar.receiveShadow = true;
+    yawGroup.add(uBottomBar);
+
+    const uLeftWall = new THREE.Mesh(new THREE.BoxGeometry(uWallThick, uBracketWallHeight, uBracketDepth), whitePvcMat);
+    uLeftWall.position.set(-uBracketWidth / 2 + uWallThick / 2, 0.08 + uBracketWallHeight / 2, 0);
+    uLeftWall.castShadow = true;
+    yawGroup.add(uLeftWall);
+
+    const uRightWall = new THREE.Mesh(new THREE.BoxGeometry(uWallThick, uBracketWallHeight, uBracketDepth), whitePvcMat);
+    uRightWall.position.set(uBracketWidth / 2 - uWallThick / 2, 0.08 + uBracketWallHeight / 2, 0);
+    uRightWall.castShadow = true;
+    yawGroup.add(uRightWall);
+
+    const leftPivotPin = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.28, 14), brassPinMat);
+    leftPivotPin.rotation.z = Math.PI / 2;
+    leftPivotPin.position.set(-uBracketWidth / 2 + 0.08, 1.48, 0);
+    yawGroup.add(leftPivotPin);
+
+    const pitchServoMesh = createSG90ServoMesh();
+    pitchServoMesh.rotation.z = Math.PI / 2;
+    pitchServoMesh.position.set(uBracketWidth / 2 + 0.04, 1.38, 0);
+    yawGroup.add(pitchServoMesh);
+
+    const pitchHornArm = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.44, 0.1), servoHornWhiteMat);
+    pitchHornArm.position.set(uBracketWidth / 2 - 0.12, 1.48, 0);
+    yawGroup.add(pitchHornArm);
+
+    // Axis 2: Elevation / Vertical Tilt (`pitchGroup`)
+    const pitchGroup = new THREE.Group();
+    pitchGroup.position.set(0, 1.48, 0);
+    yawGroup.add(pitchGroup);
+    pitchGroup.add(createPVPanelAssembly());
+
+    // 4-Quadrant Cross-Baffle ("+") LDR Module
+    const ldrModuleGroup = new THREE.Group();
+    ldrModuleGroup.position.set(0, 0.12, 1.12);
+    pitchGroup.add(ldrModuleGroup);
+
+    const cantileverArm = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.05, 0.42), whitePvcMat);
+    cantileverArm.position.set(0, -0.02, -0.14);
+    cantileverArm.castShadow = true;
+    ldrModuleGroup.add(cantileverArm);
+
+    const sensorBaseDisc = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.045, 0.56), whitePvcMat);
+    sensorBaseDisc.castShadow = true;
+    ldrModuleGroup.add(sensorBaseDisc);
+
+    const baffleWallNS = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.28, 0.54), whitePvcMat);
+    baffleWallNS.position.y = 0.15;
+    baffleWallNS.castShadow = true;
+    ldrModuleGroup.add(baffleWallNS);
+
+    const baffleWallEW = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.28, 0.035), whitePvcMat);
+    baffleWallEW.position.y = 0.15;
+    baffleWallEW.castShadow = true;
+    ldrModuleGroup.add(baffleWallEW);
+
+    const ldrQuadMats = [
+      new THREE.MeshStandardMaterial({ color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 1.5, roughness: 0.2 }),
+      new THREE.MeshStandardMaterial({ color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 1.5, roughness: 0.2 }),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xf59e0b, emissiveIntensity: 1.5, roughness: 0.2 }),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xf59e0b, emissiveIntensity: 1.5, roughness: 0.2 }),
+    ];
+
+    const ldrCapGeo = new THREE.CylinderGeometry(0.068, 0.068, 0.04, 14);
+    [
+      [-0.14, -0.14],
+      [0.14, -0.14],
+      [-0.14, 0.14],
+      [0.14, 0.14],
+    ].forEach(([qx, qz], idx) => {
+      const ldrCell = new THREE.Mesh(ldrCapGeo, ldrQuadMats[idx]);
+      ldrCell.position.set(qx, 0.04, qz);
+      ldrModuleGroup.add(ldrCell);
+    });
+
+    pitchGroup.add(new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0.14, 0), 1.45, 0x00f0ff, 0.3, 0.18));
+
+    // =========================================================================
+    // RIG B: Fixed / Passive Solar Panel (Baseline Model at 0° Horizontal Tilt)
+    // =========================================================================
+    const passiveRig = new THREE.Group();
+    passiveRig.position.set(3.6, 0.08, 0);
+    scene.add(passiveRig);
+
+    const passiveShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.2, 4.2),
+      new THREE.MeshBasicMaterial({ map: contactShadowTex, transparent: true, depthWrite: false, opacity: 0.65 })
+    );
+    passiveShadow.rotation.x = -Math.PI / 2;
+    passiveShadow.position.y = 0.01;
+    passiveRig.add(passiveShadow);
+
+    const passivePlinth = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.12, 0.24, 8), castIronBaseMat);
+    passivePlinth.position.y = 0.12;
+    passivePlinth.castShadow = true;
+    passiveRig.add(passivePlinth);
+
+    const passiveMast = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 3.1, 20), darkSteelMat);
+    passiveMast.position.y = 1.68;
+    passiveMast.castShadow = true;
+    passiveRig.add(passiveMast);
+
+    const passivePivotGroup = new THREE.Group();
+    passivePivotGroup.position.set(0, 3.32, 0);
+    passiveRig.add(passivePivotGroup);
+    passivePivotGroup.add(createPVPanelAssembly());
+    passivePivotGroup.add(new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0.14, 0), 1.45, 0xf59e0b, 0.3, 0.18));
+
+    // =========================================================================
+    // 3. HARDCORE VISIBLE SOLAR RAYS
+    // =========================================================================
+    const rayPulseUniforms = { uTime: { value: 0 } };
+
+    function createHardcoreRayShader(coreHex, edgeHex, opacityMult) {
+      return new THREE.ShaderMaterial({
+        uniforms: {
+          uTime: rayPulseUniforms.uTime,
+          uCoreColor: { value: new THREE.Color(coreHex) },
+          uEdgeColor: { value: new THREE.Color(edgeHex) },
+          uOpacity: { value: opacityMult },
+        },
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          varying vec2 vUv;
+          uniform float uTime;
+          uniform vec3 uCoreColor;
+          uniform vec3 uEdgeColor;
+          uniform float uOpacity;
+
+          void main() {
+            float wave = 0.65 + 0.35 * sin(vUv.y * 28.0 + uTime * 11.0);
+            float pulsePacket = smoothstep(0.4, 0.95, sin(vUv.y * 12.0 + uTime * 7.0));
+            vec3 col = mix(uEdgeColor, uCoreColor, 0.55 + 0.45 * pulsePacket);
+            float alpha = uOpacity * wave;
+            gl_FragColor = vec4(col, alpha);
+          }
+        `,
+      });
+    }
+
+    const unitCoreCylGeo = new THREE.CylinderGeometry(0.055, 0.055, 1, 12, 1, true);
+    const unitGlowCylGeo = new THREE.CylinderGeometry(0.16, 0.26, 1, 12, 1, true);
+    const unitOuterConeGeo = new THREE.CylinderGeometry(0.32, 0.72, 1, 16, 1, true);
+
+    const activeCoreRayMat = createHardcoreRayShader(0xffffff, 0x00f0ff, 0.96);
+    const activeGlowRayMat = createHardcoreRayShader(0xfef08a, 0x00f0ff, 0.48);
+    const activeConeMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide });
+
+    const passiveCoreRayMat = createHardcoreRayShader(0xffffff, 0xf59e0b, 0.92);
+    const passiveGlowRayMat = createHardcoreRayShader(0xfde047, 0xf59e0b, 0.42);
+    const passiveConeMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.14, depthWrite: false, side: THREE.DoubleSide });
+
+    const solarBeams = [];
+    [
+      [0, 0.14, 0],
+      [-0.95, 0.14, -0.4],
+      [0.95, 0.14, 0.4],
+    ].forEach(([ox, oy, oz], idx) => {
+      const isCenter = idx === 0;
+
+      const actBeamGroup = new THREE.Group();
+      const actCore = new THREE.Mesh(unitCoreCylGeo, activeCoreRayMat);
+      const actGlow = new THREE.Mesh(unitGlowCylGeo, activeGlowRayMat);
+      if (!isCenter) {
+        actCore.scale.set(0.65, 1, 0.65);
+        actGlow.scale.set(0.65, 1, 0.65);
+      } else {
+        actBeamGroup.add(new THREE.Mesh(unitOuterConeGeo, activeConeMat));
+      }
+      actBeamGroup.add(actCore, actGlow);
+      scene.add(actBeamGroup);
+
+      const actImpact = new THREE.Mesh(
+        new THREE.RingGeometry(0.08, isCenter ? 0.34 : 0.22, 24),
+        new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide, transparent: true, opacity: 0.9 })
+      );
+      actImpact.rotation.x = -Math.PI / 2;
+      actImpact.position.set(ox, oy + 0.02, oz);
+      pitchGroup.add(actImpact);
+
+      solarBeams.push({
+        group: actBeamGroup,
+        impactDisc: actImpact,
+        localOffset: new THREE.Vector3(ox, oy, oz),
+        isRigA: true,
+      });
+
+      const pasBeamGroup = new THREE.Group();
+      const pasCore = new THREE.Mesh(unitCoreCylGeo, passiveCoreRayMat);
+      const pasGlow = new THREE.Mesh(unitGlowCylGeo, passiveGlowRayMat);
+      if (!isCenter) {
+        pasCore.scale.set(0.65, 1, 0.65);
+        pasGlow.scale.set(0.65, 1, 0.65);
+      } else {
+        pasBeamGroup.add(new THREE.Mesh(unitOuterConeGeo, passiveConeMat));
+      }
+      pasBeamGroup.add(pasCore, pasGlow);
+      scene.add(pasBeamGroup);
+
+      const pasImpact = new THREE.Mesh(
+        new THREE.RingGeometry(0.08, isCenter ? 0.34 : 0.22, 24),
+        new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+      );
+      pasImpact.rotation.x = -Math.PI / 2;
+      pasImpact.position.set(ox, oy + 0.02, oz);
+      passivePivotGroup.add(pasImpact);
+
+      solarBeams.push({
+        group: pasBeamGroup,
+        impactDisc: pasImpact,
+        localOffset: new THREE.Vector3(ox, oy, oz),
+        isRigA: false,
+      });
+    });
+
+    if (!isSoftwareGl) {
+      renderer.compile(scene, camera);
+    }
+
+    const _sunPos = new THREE.Vector3();
+    const _targetWorld = new THREE.Vector3();
+    const _ldrWorldPos = new THREE.Vector3();
+    const _pitchServoWorldPos = new THREE.Vector3();
+    const _midPoint = new THREE.Vector3();
+    const _beamDir = new THREE.Vector3();
+    const _upVec = new THREE.Vector3(0, 1, 0);
+    const _projVec = new THREE.Vector3();
+
+    const clock = new THREE.Clock();
+    let uiUpdateAccum = 0;
+    let serialAccum = 0;
+
+    function tick() {
+      const dt = Math.min(clock.getDelta(), 0.1);
+      const elapsed = clock.getElapsedTime();
+
+      rayPulseUniforms.uTime.value = elapsed;
+      skyUniforms.uTime.value = elapsed;
+
+      if (sim.autoCycle) {
+        sim.timeOfDay += dt * 0.28 * sim.cycleSpeed;
+        if (sim.timeOfDay > 18.0) {
+          sim.timeOfDay = 6.0;
+        }
+      }
+
+      sim.cloudCurrent = THREE.MathUtils.damp(sim.cloudCurrent, sim.cloudTarget, 4.5, dt);
+      skyUniforms.uCloudCover.value = sim.cloudCurrent;
+
+      // Full 180° Solar Azimuth Sweep (-90° at 06:00 East -> 0° at 12:00 Noon -> +90° at 18:00 West)
+      const dayProgress = (sim.timeOfDay - 12.0) / 6.0;
+      const sunAzimuthDeg = dayProgress * 90.0;
+      const sunAzimuthRad = THREE.MathUtils.degToRad(sunAzimuthDeg);
+      const sunElevationDeg = 20.0 + 48.0 * Math.cos(sunAzimuthRad);
+      const sunElevationRad = THREE.MathUtils.degToRad(sunElevationDeg);
+      const sunHorizR = SOLAR_ARC_RADIUS * Math.cos(sunElevationRad);
+
+      const sunAngleDeg = sunAzimuthDeg;
+      const sunAngleRad = THREE.MathUtils.degToRad(dayProgress * 75.0);
+
+      _sunPos.set(
+        Math.sin(sunAzimuthRad) * sunHorizR,
+        Math.sin(sunElevationRad) * SOLAR_ARC_RADIUS,
+        Math.cos(sunAzimuthRad) * sunHorizR
+      );
+      sunGroup.position.copy(_sunPos);
+      sunLight.position.copy(_sunPos);
+
+      skyUniforms.uSunDir.value.copy(_sunPos).normalize();
+      const elevationCos = Math.max(0, Math.cos(sunAngleRad));
+      const dayWeight = THREE.MathUtils.smoothstep(elevationCos, 0.25, 0.75);
+      horizonFogColor.setRGB(
+        THREE.MathUtils.lerp(0.88, 0.56, dayWeight),
+        THREE.MathUtils.lerp(0.55, 0.78, dayWeight),
+        THREE.MathUtils.lerp(0.32, 0.94, dayWeight)
+      );
+      scene.fog.color.copy(horizonFogColor);
+
+      if (sim.cloudCurrent > 0.01) {
+        cloudGroup.visible = true;
+        cloudMat.opacity = sim.cloudCurrent * 0.85;
+        cloudGroup.position.set(_sunPos.x * 0.72 + Math.sin(elapsed * 1.2) * 0.35, _sunPos.y * 0.72, _sunPos.z * 0.72);
+      } else {
+        cloudGroup.visible = false;
+      }
+
+      const cloudAttenuation = 1.0 - sim.cloudCurrent * 0.62;
+      sunLight.intensity = (1.1 + elevationCos * 2.2) * cloudAttenuation;
+
+      // Dual-Axis SG90 Kinematics (FULL 180° AZIMUTH + SYNCHRONIZED ELEVATION)
+      // Axis 1: Base Azimuth Yaw (`yawGroup.rotation.y` strictly across full 180° range: -90°..+90° -> 0°..180° PWM on Pin D2)
+      const targetYawPWM = THREE.MathUtils.clamp(90.0 + sunAzimuthDeg, 0, 180);
+      sim.servoYawPWM = THREE.MathUtils.clamp(THREE.MathUtils.damp(sim.servoYawPWM, targetYawPWM, 6.0, dt), 0, 180);
+      const yawDeg = THREE.MathUtils.clamp(sim.servoYawPWM - 90.0, -90, 90);
+      sim.panelYawDeg = yawDeg;
+      yawGroup.rotation.y = THREE.MathUtils.degToRad(yawDeg);
+
+      // Axis 2: Elevation / Vertical Tilt (`pitchGroup.rotation.x` synchronized with solar elevation within 15°..165° PWM on Pin D13)
+      const targetTiltDeg = THREE.MathUtils.clamp(90.0 - sunElevationDeg, 15, 58);
+      const targetPitchPWM = THREE.MathUtils.clamp(90.0 + targetTiltDeg, 15, 165);
+      sim.servoPitchPWM = THREE.MathUtils.clamp(THREE.MathUtils.damp(sim.servoPitchPWM, targetPitchPWM, 6.5, dt), 15, 165);
+      sim.panelTiltDeg = sim.servoPitchPWM - 90.0;
+
+      const panelTiltRad = THREE.MathUtils.degToRad(sim.panelTiltDeg);
+      pitchGroup.rotation.x = panelTiltRad;
+      pitchHornArm.rotation.x = panelTiltRad;
+
+      rxLedMat.emissiveIntensity = 1.2 + Math.sin(elapsed * 22) * 1.0;
+      txLedMat.emissiveIntensity = 1.2 + Math.cos(elapsed * 18) * 1.0;
+
+      yawGroup.updateMatrixWorld();
+      pitchGroup.updateMatrixWorld();
+      passivePivotGroup.updateMatrixWorld();
+
+      for (let i = 0; i < solarBeams.length; i++) {
+        const b = solarBeams[i];
+        _targetWorld.copy(b.localOffset);
+        if (b.isRigA) {
+          pitchGroup.localToWorld(_targetWorld);
+        } else {
+          passivePivotGroup.localToWorld(_targetWorld);
+        }
+
+        const dist = _sunPos.distanceTo(_targetWorld);
+        _midPoint.addVectors(_sunPos, _targetWorld).multiplyScalar(0.5);
+        _beamDir.subVectors(_sunPos, _targetWorld).normalize();
+
+        b.group.position.copy(_midPoint);
+        b.group.quaternion.setFromUnitVectors(_upVec, _beamDir);
+        b.group.scale.set(1, dist, 1);
+
+        const pulseScale = 0.88 + 0.22 * Math.sin(elapsed * 8 + i);
+        b.impactDisc.scale.set(pulseScale, pulseScale, 1);
+      }
+
+      if (sim.cameraPresetActive) {
+        const dampAlpha = 1 - Math.exp(-5.5 * dt);
+        camera.position.lerp(sim.desiredCamPos, dampAlpha);
+        controls.target.lerp(sim.desiredCamTarget, dampAlpha);
+        if (camera.position.distanceToSquared(sim.desiredCamPos) < 0.002 && controls.target.distanceToSquared(sim.desiredCamTarget) < 0.002) {
+          sim.cameraPresetActive = false;
+        }
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+
+      // 3D X-Ray Callout Pin Projection
+      if (sim.xrayLabels && !sim.hudCollapsed) {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        const yawPWMInt = Math.round(THREE.MathUtils.clamp(sim.servoYawPWM, 0, 180));
+        const pitchPWMInt = Math.round(THREE.MathUtils.clamp(sim.servoPitchPWM, 0, 180));
+
+        _ldrWorldPos.set(0, 0.28, 1.12);
+        pitchGroup.localToWorld(_ldrWorldPos);
+
+        _pitchServoWorldPos.set(uBracketWidth / 2 + 0.04, 1.48, 0);
+        yawGroup.localToWorld(_pitchServoWorldPos);
+
+        const worldPoints = [
+          [-3.6, 1.65, 0.85],
+          [_ldrWorldPos.x, _ldrWorldPos.y + 0.25, _ldrWorldPos.z],
+          [-3.6, 1.95, -0.25],
+          [_pitchServoWorldPos.x, _pitchServoWorldPos.y + 0.25, _pitchServoWorldPos.z],
+          [3.6, 4.45, 0],
+        ];
+        const metrics = [
+          'Pins A0–A3 · 5V/GND · D2/D13',
+          'A0(TL) A1(TR) A2(BL) A3(BR)',
+          `D2 PWM: ${yawPWMInt}° (Yaw ${sim.panelYawDeg >= 0 ? '+' : ''}${sim.panelYawDeg.toFixed(0)}° / 180° Sweep)`,
+          `D13 PWM: ${pitchPWMInt}° (Tilt ${sim.panelTiltDeg.toFixed(1)}°)`,
+          'Static 0° Horizontal Tilt',
+        ];
+
+        for (let i = 0; i < 5; i++) {
+          const el = document.getElementById(`lbl-${i}`);
+          const metricEl = document.getElementById(`lbl-metric-${i}`);
+          if (!el) continue;
+
+          _projVec.set(worldPoints[i][0], worldPoints[i][1], worldPoints[i][2]);
+          _projVec.project(camera);
+          const x = (_projVec.x * 0.5 + 0.5) * w;
+          const y = (-_projVec.y * 0.5 + 0.5) * h;
+          const vis = _projVec.z < 1.0 && x > 40 && x < w - 40 && y > 40 && y < h - 40;
+
+          if (vis) {
+            el.style.display = 'block';
+            el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+            if (metricEl) metricEl.textContent = metrics[i];
+          } else {
+            el.style.display = 'none';
+          }
+        }
+      }
+
+      // Direct DOM Telemetry Updates at 10Hz
+      uiUpdateAccum += dt;
+      serialAccum += dt;
+
+      if (uiUpdateAccum >= 0.1) {
+        uiUpdateAccum = 0;
+
+        const elevErrRad = THREE.MathUtils.degToRad(targetTiltDeg - sim.panelTiltDeg);
+        const azimErrRad = THREE.MathUtils.degToRad(sunAzimuthDeg - sim.panelYawDeg);
+        const totalTrackErrRad = Math.hypot(elevErrRad, azimErrRad);
+        const baseIrradiance = Math.max(0, Math.cos(totalTrackErrRad) * cloudAttenuation);
+        const jitter = (seedOffset) => Math.round(Math.sin(elapsed * 13.7 + seedOffset) * 2);
+
+        const a0_TL = THREE.MathUtils.clamp(Math.round(baseIrradiance * (910 + Math.sin(elevErrRad) * 140 - Math.sin(azimErrRad) * 120) + jitter(1.1)), 0, 1023);
+        const a1_TR = THREE.MathUtils.clamp(Math.round(baseIrradiance * (910 + Math.sin(elevErrRad) * 140 + Math.sin(azimErrRad) * 120) + jitter(2.3)), 0, 1023);
+        const a2_BL = THREE.MathUtils.clamp(Math.round(baseIrradiance * (910 - Math.sin(elevErrRad) * 140 - Math.sin(azimErrRad) * 120) + jitter(3.7)), 0, 1023);
+        const a3_BR = THREE.MathUtils.clamp(Math.round(baseIrradiance * (910 - Math.sin(elevErrRad) * 140 + Math.sin(azimErrRad) * 120) + jitter(5.1)), 0, 1023);
+
+        const avgTop = (a0_TL + a1_TR) * 0.5;
+        const avgBottom = (a2_BL + a3_BR) * 0.5;
+        const avgLeft = (a0_TL + a2_BL) * 0.5;
+        const avgRight = (a1_TR + a3_BR) * 0.5;
+        const elevErrorADC = Math.round(avgTop - avgBottom);
+        const azimErrorADC = Math.round(avgLeft - avgRight);
+
+        ldrQuadMats[0].emissiveIntensity = 0.4 + (a0_TL / 1023) * 2.3;
+        ldrQuadMats[1].emissiveIntensity = 0.4 + (a1_TR / 1023) * 2.3;
+        ldrQuadMats[2].emissiveIntensity = 0.4 + (a2_BL / 1023) * 2.3;
+        ldrQuadMats[3].emissiveIntensity = 0.4 + (a3_BR / 1023) * 2.3;
+
+        // Single-Source-of-Truth Photovoltaic Physics & Financial Derivation
+        const {
+          vAct: activeVoltageV,
+          vPas: passiveVoltageV,
+          iAct: activeCurrentA,
+          iPas: passiveCurrentA,
+          pAct: activePowerW,
+          pPas: passivePowerW,
+        } = deriveSolarPhysicsAtTime(sim.timeOfDay, sim.cloudCurrent, totalTrackErrRad);
+
+        const { activeWh, passiveWh } = computeCumulativeEnergyUpTo(sim.timeOfDay, sim.cloudCurrent);
+        const instantEfficiencyGainPct = computeBoundedEfficiencyGainPct(activePowerW, passivePowerW);
+
+        const formattedTime = formatSolarTime(sim.timeOfDay);
+        document.getElementById('time-slider').value = String(sim.timeOfDay);
+        document.getElementById('time-text').textContent = formattedTime;
+        document.getElementById('sun-deg-text').textContent = sunAngleDeg >= 0 ? `(+${sunAngleDeg.toFixed(0)}° W)` : `(${sunAngleDeg.toFixed(0)}° E)`;
+
+        document.getElementById('net-gain-badge').textContent = `+${instantEfficiencyGainPct.toFixed(1)}%`;
+        document.getElementById('active-watt-val').textContent = `${activePowerW.toFixed(2)} W`;
+        document.getElementById('passive-watt-val').textContent = `${passivePowerW.toFixed(2)} W`;
+        document.getElementById('active-volt-val').textContent = `${activeVoltageV.toFixed(1)} V`;
+        document.getElementById('passive-volt-val').textContent = `${passiveVoltageV.toFixed(1)} V`;
+        document.getElementById('active-amp-val').textContent = `${activeCurrentA.toFixed(2)} A`;
+        document.getElementById('passive-amp-val').textContent = `${passiveCurrentA.toFixed(2)} A`;
+        document.getElementById('active-wh-val').textContent = `${activeWh.toFixed(2)} Wh`;
+        document.getElementById('passive-wh-val').textContent = `${passiveWh.toFixed(2)} Wh`;
+
+        const sunSign = sunAzimuthDeg >= 0 ? '+' : '';
+        const panelSign = sim.panelYawDeg >= 0 ? '+' : '';
+        const devDeg = Math.hypot(sunAzimuthDeg - sim.panelYawDeg, targetTiltDeg - sim.panelTiltDeg);
+        document.getElementById('footer-sun-angle').textContent = `${sunSign}${sunAzimuthDeg.toFixed(1)}°`;
+        document.getElementById('footer-panel-angle').textContent = `${panelSign}${sim.panelYawDeg.toFixed(1)}°`;
+        document.getElementById('footer-dev-angle').textContent = `${devDeg.toFixed(1)}°`;
+
+        if (!telemMinimized && !sim.hudCollapsed) {
+          drawTelemetryChart(sim.timeOfDay, activePowerW, sim.cloudCurrent);
+        }
+
+        if (serialAccum >= 0.6 && sim.autoCycle) {
+          serialAccum = 0;
+          const sec = String(Math.floor(elapsed % 60)).padStart(2, '0');
+          const d2Yaw = Math.round(THREE.MathUtils.clamp(sim.servoYawPWM, 0, 180));
+          const d13Pitch = Math.round(THREE.MathUtils.clamp(sim.servoPitchPWM, 0, 180));
+          const lineStr = `[${formattedTime}:${sec}] A0:${a0_TL} A1:${a1_TR} A2:${a2_BL} A3:${a3_BR} (ΔE:${elevErrorADC} ΔA:${azimErrorADC}) | D2_YAW: ${d2Yaw}° | D13_PITCH: ${d13Pitch}° | PWR: ${activePowerW.toFixed(2)}W (+${instantEfficiencyGainPct.toFixed(1)}%)`;
+
+          sim.serialLogs.push(lineStr);
+          if (sim.serialLogs.length > 4) sim.serialLogs.shift();
+
+          const serialEl = document.getElementById('serial-monitor');
+          if (serialEl) {
+            serialEl.innerHTML = sim.serialLogs
+              .map((l) => `<div class="truncate tabular-nums text-slate-300"><span class="text-[#00F0FF] mr-1.5">&gt;</span>${l}</div>`)
+              .join('');
+          }
+        }
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+
+    window.addEventListener('resize', () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    });
+  </script>
+</body>
+</html>
